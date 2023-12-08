@@ -7,14 +7,14 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastrService } from 'ngx-toastr';
-import { catchError, throwError } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
 	selector: 'app-home',
 	templateUrl: './home.component.html',
 	styleUrls: ['./home.component.scss'],
 	standalone: true,
-	imports: [TableModule, PaginatorModule, CommonModule, ButtonModule, InputTextModule],
+	imports: [CommonModule, TableModule, PaginatorModule, ButtonModule, InputTextModule],
 	providers: [HomeService]
 })
 export class HomeComponent implements OnInit {
@@ -30,34 +30,45 @@ export class HomeComponent implements OnInit {
 	filterName: string = '';
 	filter: string = '';
 
-	ngOnInit(): void {
+	async ngOnInit() {
 		//Clear filters
 		this.page = 0;
 		this.filterName = '';
 		this.filter = '';
 		//Serch orders
-		this.searchOrders();
+		await this.searchOrders();
 	}
 
-	searchOrders() {
-		//Search orders
-		this.homeService.searchOrders(this.filterName, this.filter, this.page).subscribe((data: any) => {
-			//Set orders
+	async searchOrders() {
+		try {
+			const data: any = await lastValueFrom(this.homeService.searchOrders(this.filterName, this.filter, this.page));
 			this.dataSource = data?.result;
 			this.totalRecords = data?.total;
 			this.loading = false;
-		});
+		} catch (error: any) {
+			//Treating error message.
+			if (String(error.error) === 'TypeError: NetworkError when attempting to fetch resource.') {
+				this.dataSource = [];
+				this.totalRecords = 0;
+				this.toastr.error('Error connecting to database', 'Error', {
+					timeOut: 3000,
+					progressBar: true,
+					closeButton: true
+				});
+			}
+			this.loading = false;
+		}
 	}
 
-	onPageChange(page: any) {
+	async onPageChange(page: any) {
 		//Set page
 		this.page = page;
 		this.loading = true;
 		//Search orders
-		this.searchOrders();
+		await this.searchOrders();
 	}
 
-	setNameFilter() {
+	async setNameFilter() {
 		//Set loading
 		this.loading = true;
 		this.page = 0;
@@ -66,19 +77,19 @@ export class HomeComponent implements OnInit {
 			this.filterName = '';
 			this.filter = '';
 			this.statusFilter = '';
-			this.searchOrders();
+			await this.searchOrders();
 			//If filter is not empty, set filter
 		} else {
 			this.filter = this.nameFilter;
 			this.filterName = 'name';
 			this.statusFilter = '';
-			this.searchOrders();
+			await this.searchOrders();
 		}
 		//Set page to first
 		this.paginator.changePageToFirst(new Event(''));
 	}
 
-	setStatusFilter() {
+	async setStatusFilter() {
 		//Set loading
 		this.loading = true;
 		this.page = 0;
@@ -87,42 +98,40 @@ export class HomeComponent implements OnInit {
 			this.filterName = '';
 			this.filter = '';
 			this.nameFilter = '';
-			this.searchOrders();
+			await this.searchOrders();
 			//If filter is not empty, set filter
 		} else {
 			this.filter = this.statusFilter;
 			this.filterName = 'status';
 			this.nameFilter = '';
-			this.searchOrders();
+			await this.searchOrders();
 		}
 		//Set page to first
 		this.paginator.changePageToFirst(new Event(''));
 	}
 
-	cancelOrder(id: number) {
+	async cancelOrder(id: number) {
 		this.loading = true;
 		//Cancel order
-		this.homeService.cancelOrder(id).subscribe(() => {
-			this.searchOrders();
-		});
+		await lastValueFrom(this.homeService.cancelOrder(id));
+		await this.searchOrders();
 	}
 
-	loadOrders() {
+	async loadOrders() {
 		this.loading = true;
 		//Import orders
-		this.homeService
-			.importOrders()
-			.pipe(
-				catchError((error) => {
-					this.loading = false;
-					this.toastr.error(error.error, 'Error');
-					return throwError(() => error);
-				})
-			)
-			.subscribe((data: any) => {
-				this.onPageChange(0);
-				this.toastr.success(data, 'Success');
+		try {
+			const data: any = await lastValueFrom(this.homeService.importOrders());
+			await this.onPageChange(0);
+			this.toastr.success(data, 'Success', { timeOut: 3000, progressBar: true, closeButton: true });
+		} catch (error: any) {
+			this.loading = false;
+			this.toastr.error(error.error, 'Error', {
+				timeOut: 3000,
+				progressBar: true,
+				closeButton: true
 			});
+		}
 	}
 }
 
