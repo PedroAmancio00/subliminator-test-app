@@ -1,0 +1,77 @@
+<div class="home-container">
+	<p-table
+		#dt1
+		[value]="dataSource"
+		[tableStyle]="{ 'min-width': '50rem' }"
+		[loading]="loading"
+		[globalFilterFields]="['name', 'country.name', 'representative.name', 'status']"
+	>
+		<ng-template pTemplate="header">
+			<tr>
+				<th>Date</th>
+				<th>Customer</th>
+				<th>Address</th>
+				<th>City</th>
+				<th>Postcode</th>
+				<th>Country</th>
+				<th>Amount</th>
+				<th>Status</th>
+				<th>Deleted</th>
+				<th>Last Modified</th>
+				<th>Cancel</th>
+			</tr>
+			<tr>
+				<th></th>
+				<th>
+					<div class="input-group">
+						<input pInputText type="text" placeholder="Search by Name" [(ngModel)]="nameFilter" class="w-full input-text" />
+						<i class="pi pi-search search-icon" (click)="setNameFilter()"></i>
+					</div>
+				</th>
+				<th></th>
+				<th></th>
+				<th></th>
+				<th></th>
+				<th></th>
+				<th>
+					<div class="input-group">
+						<input pInputText type="text" placeholder="Search by Status" [(ngModel)]="statusFilter" class="w-full input-text" />
+						<i class="pi pi-search search-icon" (click)="setStatusFilter()"></i>
+					</div>
+				</th>
+				<th></th>
+				<th></th>
+				<th></th>
+			</tr>
+		</ng-template>
+		<ng-template pTemplate="body" let-order>
+			<tr [ngClass]="{ cancelled: order.status === 'cancelled' }">
+				<td>{{ order.date }}</td>
+				<td>{{ order.customer }}</td>
+				<td>{{ order.address1 }}</td>
+				<td>{{ order.city }}</td>
+				<td>{{ order.postcode }}</td>
+				<td>{{ order.country }}</td>
+				<td>{{ order.amount }}</td>
+				<td>{{ order.status }}</td>
+				<td>{{ order.deleted }}</td>
+				<td>{{ order.last_modified }}</td>
+				<td>
+					<button
+						pButton
+						*ngIf="order.status !== 'cancelled'"
+						type="button"
+						icon="pi pi-times"
+						class="p-button-danger"
+						(click)="cancelOrder(order.id)"
+					></button>
+				</td>
+			</tr>
+		</ng-template>
+	</p-table>
+	<p-paginator #paginator (onPageChange)="onPageChange($event.page)" [first]="0" [rows]="10" [totalRecords]="totalRecords"></p-paginator>
+	<div>
+		<p-button label="Load orders.json" (onClick)="loadOrders()"></p-button>
+	</div>
+</div>
+

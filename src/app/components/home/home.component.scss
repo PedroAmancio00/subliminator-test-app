@@ -1,0 +1,24 @@
+.cancelled {
+	background-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.input-group {
+	position: relative;
+}
+
+.input-group .search-icon {
+	position: absolute;
+	right: 10%;
+	top: 50%;
+	transform: translateY(-50%);
+	cursor: pointer;
+}
+
+.input-group input {
+	padding-right: 30px;
+}
+
+.input-text {
+	width: 100%;
+}
+
